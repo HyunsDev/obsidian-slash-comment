@@ -175,10 +175,24 @@ class SlashCommentViewPlugin implements PluginValue {
 		const builder = new RangeSetBuilder<Decoration>();
 		const isLivePreview = view.state.field(editorLivePreviewField);
 		const selection = view.state.selection;
+		let lastLineStart = -1;
 
-		for (const { from, to } of view.visibleRanges) {
+		// Ensure ranges are sorted to prevent backward processing
+		const visibleRanges = [...view.visibleRanges].sort(
+			(a, b) => a.from - b.from
+		);
+
+		for (const { from, to } of visibleRanges) {
 			for (let pos = from; pos <= to; ) {
 				const line = view.state.doc.lineAt(pos);
+				// If we've already processed this line (or a later one), skip it.
+				// This handles overlapping ranges and prevents duplicate/out-of-order additions.
+				if (line.from <= lastLineStart) {
+					pos = line.to + 1;
+					continue;
+				}
+				lastLineStart = line.from;
+
 				const text = line.text;
 				const matchIndex = text.indexOf(COMMENT_MARKER);
 

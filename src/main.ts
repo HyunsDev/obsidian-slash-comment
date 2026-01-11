@@ -47,36 +47,32 @@ const processBlock = (el: HTMLElement) => {
 			const matchIndex = text.indexOf(COMMENT_MARKER);
 
 			if (matchIndex !== -1) {
-				// 1. Split text node
 				const preCommentText = text.substring(0, matchIndex);
 				let rawCommentText = text.substring(matchIndex);
 
-				// [Fix] Handle cases where the text node contains a newline (\n)
-				// (Comments are valid only up to the newline)
+				// Handle newlines within the text node; comments end at the newline.
 				const newlineIndex = rawCommentText.indexOf("\n");
 				let postCommentText = "";
 				let hasNewlineInside = false;
 
 				if (newlineIndex !== -1) {
-					postCommentText = rawCommentText.substring(newlineIndex); // Preserve text after \n
-					rawCommentText = rawCommentText.substring(0, newlineIndex); // Text before \n is the comment
+					postCommentText = rawCommentText.substring(newlineIndex);
+					rawCommentText = rawCommentText.substring(0, newlineIndex);
 					hasNewlineInside = true;
 				}
 
-				// Check if there is a space after // ("// " vs "//text")
-				let markerLength = COMMENT_MARKER.length; // 2
+				// Check for space after marker ("// " vs "//text")
+				let markerLength = COMMENT_MARKER.length;
 				if (rawCommentText.startsWith(COMMENT_MARKER + " ")) {
-					markerLength = COMMENT_MARKER.length + 1; // 3
+					markerLength = COMMENT_MARKER.length + 1;
 				}
 
-				// Modify original text node (keep only the part before the comment)
 				node.textContent = preCommentText;
 
-				// 2. Create comment container
 				const containerSpan = document.createElement("span");
 				containerSpan.addClass(CLS.CONTAINER);
 
-				// Marker to hide (// or // )
+				// Hide the marker
 				const hiddenMarker = document.createElement("span");
 				hiddenMarker.textContent = rawCommentText.substring(
 					0,
@@ -85,20 +81,18 @@ const processBlock = (el: HTMLElement) => {
 				hiddenMarker.addClass(CLS.HIDDEN);
 				containerSpan.appendChild(hiddenMarker);
 
-				// Comment content
 				const afterMarkerText = document.createElement("span");
 				afterMarkerText.textContent =
 					rawCommentText.substring(markerLength);
 				containerSpan.appendChild(afterMarkerText);
 
-				// 3. Insert container (after original node)
 				if (node.nextSibling) {
 					el.insertBefore(containerSpan, node.nextSibling);
 				} else {
 					el.appendChild(containerSpan);
 				}
 
-				// 4. [Important] If newline was inside the text node, restore the remaining text after the container
+				// Restore text after the newline if it existed
 				if (hasNewlineInside) {
 					const postTextNode =
 						document.createTextNode(postCommentText);
@@ -110,10 +104,8 @@ const processBlock = (el: HTMLElement) => {
 					} else {
 						el.appendChild(postTextNode);
 					}
-					// Since there was a newline, do not move sibling nodes
 				} else {
-					// 5. Handle sibling nodes (move subsequent nodes into the comment container)
-					// Stop if a <br> tag is encountered!
+					// Move subsequent inline nodes into the comment container until a line break
 					while (i + 1 < childNodes.length) {
 						const nextSibling = childNodes[i + 1];
 						if (!nextSibling) {
@@ -121,7 +113,7 @@ const processBlock = (el: HTMLElement) => {
 							continue;
 						}
 
-						// [Core Fix] Stop processing if a newline tag (<br>) is encountered
+						// Stop at <br> tags
 						if (nextSibling.nodeName === "BR") {
 							break;
 						}
@@ -131,8 +123,6 @@ const processBlock = (el: HTMLElement) => {
 						i++;
 					}
 				}
-
-				// Continue searching as there might be multiple lines in one block
 			}
 		} else if (node instanceof HTMLElement) {
 			processBlock(node);

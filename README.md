@@ -42,6 +42,10 @@ Contributions are welcome! If you have a suggestion for an improvement or have f
 5.  Push to the branch (`git push origin feature/new-thing`).
 6.  Open a Pull Request.
 
+## Acknowledgments
+
+This plugin was inspired by and developed with reference to [obsidian-inline-spoilers](https://github.com/logonoff/obsidian-inline-spoilers).
+
 ## License
 
 This plugin is licensed under the [GPL-3.0 License](LICENSE).

@@ -1,99 +1,256 @@
-import {App, Editor, MarkdownView, Modal, Notice, Plugin} from 'obsidian';
-import {DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab} from "./settings";
+import { RangeSetBuilder } from "@codemirror/state";
+import {
+	Decoration,
+	DecorationSet,
+	EditorView,
+	PluginSpec,
+	PluginValue,
+	ViewPlugin,
+	ViewUpdate,
+} from "@codemirror/view";
+import { Plugin, editorLivePreviewField } from "obsidian";
 
-// Remember to rename these classes and interfaces!
+// --- Constants ---
+const TARGET_TAGS = "p, li, h1, h2, h3, h4, h5, h6, blockquote, th, td, div";
+const COMMENT_MARKER = "//";
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+const CLS = {
+	CONTAINER: "cm-slash-comment-container",
+	COMMENT: "cm-slash-comment",
+	HIDDEN: "cm-slash-hide",
+};
 
-	async onload() {
-		await this.loadSettings();
+const DATA_ATTR = "processedSlashComment";
 
-		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
+/*
+ * ==============================
+ * 1. Reading Mode Logic
+ * ==============================
+ */
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
+/**
+ * Processes a block element to style inline comments.
+ * It searches for the comment marker and wraps the remaining text/nodes in a styled container.
+ * Stops at <br> tags or newlines to prevent bleeding into the next line.
+ */
+const processBlock = (el: HTMLElement) => {
+	if (el.dataset[DATA_ATTR]) return;
 
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
+	// Snapshot of child nodes
+	const childNodes = Array.from(el.childNodes);
+
+	for (let i = 0; i < childNodes.length; i++) {
+		const node = childNodes[i]!;
+
+		if (node.nodeType === Node.TEXT_NODE && node.textContent) {
+			const text = node.textContent;
+			const matchIndex = text.indexOf(COMMENT_MARKER);
+
+			if (matchIndex !== -1) {
+				// 1. Split text node
+				const preCommentText = text.substring(0, matchIndex);
+				let rawCommentText = text.substring(matchIndex);
+
+				// [Fix] Handle cases where the text node contains a newline (\n)
+				// (Comments are valid only up to the newline)
+				const newlineIndex = rawCommentText.indexOf("\n");
+				let postCommentText = "";
+				let hasNewlineInside = false;
+
+				if (newlineIndex !== -1) {
+					postCommentText = rawCommentText.substring(newlineIndex); // Preserve text after \n
+					rawCommentText = rawCommentText.substring(0, newlineIndex); // Text before \n is the comment
+					hasNewlineInside = true;
+				}
+
+				// Check if there is a space after // ("// " vs "//text")
+				let markerLength = COMMENT_MARKER.length; // 2
+				if (rawCommentText.startsWith(COMMENT_MARKER + " ")) {
+					markerLength = COMMENT_MARKER.length + 1; // 3
+				}
+
+				// Modify original text node (keep only the part before the comment)
+				node.textContent = preCommentText;
+
+				// 2. Create comment container
+				const containerSpan = document.createElement("span");
+				containerSpan.addClass(CLS.CONTAINER);
+
+				// Marker to hide (// or // )
+				const hiddenMarker = document.createElement("span");
+				hiddenMarker.textContent = rawCommentText.substring(
+					0,
+					markerLength
+				);
+				hiddenMarker.addClass(CLS.HIDDEN);
+				containerSpan.appendChild(hiddenMarker);
+
+				// Comment content
+				const afterMarkerText = document.createElement("span");
+				afterMarkerText.textContent =
+					rawCommentText.substring(markerLength);
+				containerSpan.appendChild(afterMarkerText);
+
+				// 3. Insert container (after original node)
+				if (node.nextSibling) {
+					el.insertBefore(containerSpan, node.nextSibling);
+				} else {
+					el.appendChild(containerSpan);
+				}
+
+				// 4. [Important] If newline was inside the text node, restore the remaining text after the container
+				if (hasNewlineInside) {
+					const postTextNode =
+						document.createTextNode(postCommentText);
+					if (containerSpan.nextSibling) {
+						el.insertBefore(
+							postTextNode,
+							containerSpan.nextSibling
+						);
+					} else {
+						el.appendChild(postTextNode);
+					}
+					// Since there was a newline, do not move sibling nodes
+				} else {
+					// 5. Handle sibling nodes (move subsequent nodes into the comment container)
+					// Stop if a <br> tag is encountered!
+					while (i + 1 < childNodes.length) {
+						const nextSibling = childNodes[i + 1];
+						if (!nextSibling) {
+							i++;
+							continue;
+						}
+
+						// [Core Fix] Stop processing if a newline tag (<br>) is encountered
+						if (nextSibling.nodeName === "BR") {
+							break;
+						}
+
+						el.removeChild(nextSibling);
+						containerSpan.appendChild(nextSibling);
+						i++;
+					}
+				}
+
+				// Continue searching as there might be multiple lines in one block
 			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				editor.replaceSelection('Sample editor command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
+		} else if (node instanceof HTMLElement) {
+			processBlock(node);
+		}
+	}
+
+	el.dataset[DATA_ATTR] = "true";
+};
+
+const updateReadingMode = (element: HTMLElement) => {
+	const allowedElems = element.findAll(TARGET_TAGS);
+	for (const elem of allowedElems) {
+		if (elem instanceof HTMLElement) {
+			processBlock(elem);
+		}
+	}
+};
+
+/*
+ * ==============================
+ * 2. Editor / Live Preview Logic
+ * ==============================
+ */
+
+const DECORATIONS = {
+	CONTENT: Decoration.mark({ class: CLS.COMMENT }),
+	HIDDEN: Decoration.mark({ class: CLS.HIDDEN }),
+};
+
+class SlashCommentViewPlugin implements PluginValue {
+	decorations: DecorationSet;
+
+	constructor(view: EditorView) {
+		this.decorations = this.buildDecorations(view);
+	}
+
+	update(update: ViewUpdate) {
+		if (
+			update.docChanged ||
+			update.viewportChanged ||
+			update.selectionSet
+		) {
+			this.decorations = this.buildDecorations(update.view);
+		}
+	}
+
+	destroy() {}
+
+	buildDecorations(view: EditorView): DecorationSet {
+		const builder = new RangeSetBuilder<Decoration>();
+		const isLivePreview = view.state.field(editorLivePreviewField);
+		const selection = view.state.selection;
+
+		for (const { from, to } of view.visibleRanges) {
+			for (let pos = from; pos <= to; ) {
+				const line = view.state.doc.lineAt(pos);
+				const text = line.text;
+				const matchIndex = text.indexOf(COMMENT_MARKER);
+
+				if (matchIndex >= 0) {
+					const start = line.from + matchIndex;
+					const end = line.to;
+
+					let hideLength = COMMENT_MARKER.length; // 2
+					if (text[matchIndex + COMMENT_MARKER.length] === " ") {
+						hideLength = COMMENT_MARKER.length + 1; // 3
 					}
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+					const isCursorOnLine = selection.ranges.some(
+						(range) =>
+							range.to >= line.from && range.from <= line.to
+					);
+
+					if (isLivePreview && !isCursorOnLine) {
+						builder.add(
+							start,
+							start + hideLength,
+							DECORATIONS.HIDDEN
+						);
+
+						if (start + hideLength < end) {
+							builder.add(
+								start + hideLength,
+								end,
+								DECORATIONS.CONTENT
+							);
+						}
+					} else {
+						builder.add(start, end, DECORATIONS.CONTENT);
+					}
 				}
-				return false;
+				pos = line.to + 1;
 			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			new Notice("Click");
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-
-	}
-
-	onunload() {
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MyPluginSettings>);
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
+		}
+		return builder.finish();
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+const pluginSpec: PluginSpec<SlashCommentViewPlugin> = {
+	decorations: (value: SlashCommentViewPlugin) => value.decorations,
+};
 
-	onOpen() {
-		let {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
+const commentEditorPlugin = ViewPlugin.fromClass(
+	SlashCommentViewPlugin,
+	pluginSpec
+);
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
+/*
+ * ==============================
+ * 3. Main Plugin Definition
+ * ==============================
+ */
+
+export default class SlashCommentPlugin extends Plugin {
+	async onload() {
+		this.registerEditorExtension(commentEditorPlugin);
+		this.registerMarkdownPostProcessor((element) => {
+			updateReadingMode(element);
+		});
 	}
 }

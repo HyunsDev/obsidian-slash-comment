@@ -1,90 +1,47 @@
-# Obsidian Sample Plugin
+# Slash Comment for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+[![Plugin version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhyunsdev%2Fobsidian-slash-comment%2Frefs%2Fheads%2Fmain%2Fmanifest.json&query=version&label=version)](https://github.com/hyunsdev/obsidian-slash-comment/blob/main/manifest.json)
+[![GitHub License](https://img.shields.io/github/license/hyunsdev/obsidian-slash-comment?color=%23a32d2a)](https://github.com/hyunsdev/obsidian-slash-comment/blob/main/LICENSE.md)
+[![GitHub Repo stars](https://img.shields.io/github/stars/hyunsdev/obsidian-slash-comment)](https://github.com/hyunsdev/obsidian-slash-comment)
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+This plugin adds support for Javascript-style comments (using the `//` syntax) to your notes in [Obsidian](https://obsidian.md). Any text following `//` on a line will be rendered with a comment style.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+![Demo](assets/screenshot.png)
 
-## First time developing plugins?
+## Usage
 
-Quick starting guide for new plugin devs:
+Simply type `//` in the editor. Any text that follows on the same line will be styled as a comment. This is useful for adding notes, to-dos, or metadata to your documents that you want to be visually distinct from the main content.
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```
+This is a normal line of text.
+// This is a comment. It will be styled differently.
+You can also add comments after your text. // Like this.
 ```
 
-If you have multiple URLs, you can also do:
+## Installation
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
-```
+This plugin is not yet in the official Obsidian community plugin browser. It can be installed manually or using the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin.
 
-## API Documentation
+### With BRAT
 
-See https://docs.obsidian.md
+1.  Install the **BRAT** plugin from the Obsidian Community Plugins browser.
+2.  Open the settings for BRAT.
+3.  Click on **"Add Beta plugin"**.
+4.  In the repository field, enter: `hyunsdev/obsidian-slash-comment`
+5.  Click **"Add Plugin"**. BRAT will install the latest version.
+6.  Enable the **"Slash Comment"** plugin in the "Community plugins" tab in Obsidian's settings.
+
+## Contributing
+
+Contributions are welcome! If you have a suggestion for an improvement or have found a bug, please feel free to open an issue or create a pull request.
+
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix (e.g., `git checkout -b feature/new-thing` or `bugfix/issue-fix`).
+3.  Make your changes.
+4.  Commit your changes (`git commit -m 'Add some feature'`).
+5.  Push to the branch (`git push origin feature/new-thing`).
+6.  Open a Pull Request.
+
+## License
+
+This plugin is licensed under the [GPL-3.0 License](LICENSE).

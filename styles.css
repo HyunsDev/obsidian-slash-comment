@@ -1,8 +1,21 @@
-/*
+.theme-dark .cm-slash-comment {
+	color: var(--code-comment);
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.theme-light .cm-slash-comment {
+	color: var(--code-comment);
+}
 
-If your plugin does not need CSS, delete this file.
+/* Editor */
+.cm-slash-hide {
+	position: absolute;
+	left: -9999px;
+}
 
-*/
+/* Reader */
+.theme-dark .cm-slash-comment-container {
+	color: var(--code-comment);
+}
+.theme-light .cm-slash-comment-container {
+	color: var(--code-comment);
+}

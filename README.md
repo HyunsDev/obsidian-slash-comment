@@ -1,7 +1,7 @@
 # Slash Comment for Obsidian
 
-[![Plugin version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhyunsdev%2Fobsidian-slash-comment%2Frefs%2Fheads%2Fmain%2Fmanifest.json&query=version&label=version)](https://github.com/hyunsdev/obsidian-slash-comment/blob/main/manifest.json)
-[![GitHub License](https://img.shields.io/github/license/hyunsdev/obsidian-slash-comment?color=%23a32d2a)](https://github.com/hyunsdev/obsidian-slash-comment/blob/main/LICENSE.md)
+[![Plugin version](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fhyunsdev%2Fobsidian-slash-comment%2Frefs%2Fheads%master%2Fmanifest.json&query=version&label=version)](https://github.com/hyunsdev/obsidian-slash-comment/blob/master/manifest.json)
+[![GitHub License](https://img.shields.io/github/license/hyunsdev/obsidian-slash-comment?color=%23a32d2a)](https://github.com/hyunsdev/obsidian-slash-comment/blob/master/LICENSE.md)
 [![GitHub Repo stars](https://img.shields.io/github/stars/hyunsdev/obsidian-slash-comment)](https://github.com/hyunsdev/obsidian-slash-comment)
 
 This plugin adds support for Javascript-style comments (using the `//` syntax) to your notes in [Obsidian](https://obsidian.md). Any text following `//` on a line will be rendered with a comment style.

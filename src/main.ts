@@ -12,7 +12,7 @@ import { Plugin, editorLivePreviewField } from "obsidian";
 
 // --- Constants ---
 const TARGET_TAGS = "p, li, h1, h2, h3, h4, h5, h6, blockquote, th, td, div";
-const COMMENT_MARKER = "//";
+const COMMENT_MARKER = "// ";
 
 const CLS = {
 	CONTAINER: "cm-slash-comment-container",
@@ -61,11 +61,7 @@ const processBlock = (el: HTMLElement) => {
 					hasNewlineInside = true;
 				}
 
-				// Check for space after marker ("// " vs "//text")
-				let markerLength = COMMENT_MARKER.length;
-				if (rawCommentText.startsWith(COMMENT_MARKER + " ")) {
-					markerLength = COMMENT_MARKER.length + 1;
-				}
+				const markerLength = COMMENT_MARKER.length;
 
 				node.textContent = preCommentText;
 
@@ -200,10 +196,7 @@ class SlashCommentViewPlugin implements PluginValue {
 					const start = line.from + matchIndex;
 					const end = line.to;
 
-					let hideLength = COMMENT_MARKER.length; // 2
-					if (text[matchIndex + COMMENT_MARKER.length] === " ") {
-						hideLength = COMMENT_MARKER.length + 1; // 3
-					}
+					const hideLength = COMMENT_MARKER.length;
 
 					const isCursorOnLine = selection.ranges.some(
 						(range) =>
